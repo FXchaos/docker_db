@@ -9,6 +9,7 @@ RUN dnf config-manager --set-enabled powertools
 RUN dnf -y upgrade
 RUN dnf -y install bison cmake gcc gcc-c++ git libaio libtirpc-devel m4 make ncurses-devel openssl-devel rpcgen wget
 
+
 WORKDIR /tmp/build/boost
 
 RUN wget -qO- "https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_1_73_0.tar.gz" \
