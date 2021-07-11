@@ -5,7 +5,7 @@ FROM centos:$CENTOS_VERSION
 
 RUN set -x \
     && groupadd -f -r mysql \
-    && useradd -r -g mysql mysql
+    && useradd -r -s /bin/false -G mysql -g mysql mysql
 
 RUN dnf -y install dnf-plugins-core
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
@@ -54,11 +54,25 @@ RUN cmake .. \
     -DCPACK_MONOLITHIC_INSTALL=1 \
     -DCMAKE_C_COMPILER=/usr/bin/gcc \
     -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
-    -DCMAKE_C_FLAGS_RELEASE="-O3 -g0" \
-    -DCMAKE_CXX_FLAGS_RELEASE="-O3 -g0" \
+    -DCMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG" \
+    -DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
     -DDOWNLOAD_BOOST=0 \
     -DWITH_BOOST=/tmp/build/boost \
     && make -j$(getconf _NPROCESSORS_ONLN) \
     && make install
 
-CMD ["/usr/sbin/init"]
+WORKDIR /usr/local/mysql
+
+RUN mkdir mysql-files \
+    && chown mysql:mysql mysql-files \
+    && chmod 750 mysql-files
+
+RUN bin/mysqld --initialize-insecure --user=mysql
+
+#TODO: bin/mysql_ssl_rsa_setup
+
+RUN rm -rf /tmp/build
+
+EXPOSE 3306
+
+CMD ["bin/mysqld_safe", "--user=mysql"]
